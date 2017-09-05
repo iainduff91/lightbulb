@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Trello Lightbulb</title>
+    <script src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
+    <script src="https://api.trello.com/1/client.js?key=57a16d18be99f6b5a31d21c8e7c9f940"></script>
+</head>
+<body>
+    <script>
+        let authenticationSuccess = () => {
+            alert('Authentication successful');
+        };
+
+        let authenticationFailure = () => {
+            alert('Authentication failed');
+        };
+
+        let authenticateUser = () => {
+            Trello.authorize({
+                type: 'popup',
+                name: 'Lightbulb for Trello',
+                scope: {
+                    read: 'true',
+                    write: 'true'
+                },
+                expiration: 'never',
+                success: authenticationSuccess,
+                error: authenticationFailure
+            });
+        };
+
+        let postNewCard = () => {
+            var myList = '54b4d5df9849cd0999ad99d5';
+
+            var creationSuccess = function (data) {
+                alert(`Card created successfully. ${JSON.stringify(data, null, 2)}`);
+            };
+
+            var newCard = {
+                name: 'New Test Card',
+                desc: 'This is the description of our new card.',
+                // Place this card at the top of our list
+                idList: myList,
+                pos: 'top'
+            };
+
+            Trello.post('/cards/', newCard, creationSuccess);
+        };
+
+        let addRedLabelToCard = () => {
+            Trello.rest('GET', 'members/me/boards', {}, (data) => {
+                alert(`${JSON.stringify(data, null, 2)}`);
+            },() => {
+                alert(`Could not retrieve data`);
+            });
+        };
+
+        $(document).ready(() => {
+            //authenticate user
+            authenticateUser();
+
+            //retrieve all cards in the backlog that have ONLY red labels
+
+            //for each of those cards...
+                //update their lists to be the Ideas list
+        });
+    </script>
+
+</body>
+</html>
