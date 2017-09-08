@@ -9,11 +9,11 @@
 <body>
     <script>
         let authenticationSuccess = () => {
-            alert('Authentication successful');
+            console.log('Authentication successful');
         };
 
         let authenticationFailure = () => {
-            alert('Authentication failed');
+            console.error('Authentication failed');
         };
 
         let authenticateUser = () => {
@@ -29,6 +29,38 @@
                 error: authenticationFailure
             });
         };
+
+        let retrieveAllCardsFromBacklog = (cb) => {
+            Trello.get('/search', {
+                query: 'list:Backlog label:red',
+                idBoards: '54b4d5df9849cd0999ad99d4',
+                card_fields: 'name,labels',
+                cards_limit: '100'
+            }, (data) => {
+                console.log(`Successfully retrieved ${data.cards.length} cards`);
+                console.dir(data);
+                return cb(null, data.cards);
+            }, (err) => {
+                console.error('Failed to retrieve labelled cards');
+                console.error(err);
+                return cb(err);
+            });
+        };
+
+        let createTemporaryList = (cb) => {
+            Trello.post('/lists', {
+                name: 'Backlog -> Ideas',
+                idBoard: '54b4d5df9849cd0999ad99d4'
+            }, (data) => {
+                console.log('Successfully created temporary list');
+                console.dir(data);
+                return cb(null, data);
+            }, (err) => {
+                console.error('Could not create temporary list');
+                console.error(err);
+                return cb(err);
+        });
+        }
 
         let postNewCard = () => {
             var myList = '54b4d5df9849cd0999ad99d5';
@@ -61,9 +93,33 @@
             authenticateUser();
 
             //retrieve all cards in the backlog that have ONLY red labels
+            retrieveAllCardsFromBacklog((err, cards) => {
+                if (err) {
+                    console.error('Could not retrieve cards on document load');
+                    console.error(err);
+                    return;
+                }
 
-            //for each of those cards...
-                //update their lists to be the Ideas list
+                createTemporaryList((err, list) => {
+                    if (err) {
+                        console.error('Could not create temporary list on document load');
+                        console.error(err);
+                        return;
+                    }
+
+                    for(var i = 0; i < cards.length; i++) {
+                        console.log(`Sending card "${cards[i].name}" to ${list.name}...`);
+                        Trello.put(`/cards/${cards[i].id}`, {
+                            idList: list.id
+                        }, (card) => {
+                            console.log(`"${card.name}" moved successfully`);
+                        }, (err) => {
+                            console.error(`Failed to move card "${cards[i].name}"`);
+                            console.error(err);
+                        });
+                    }
+                });
+            });
         });
     </script>
 
